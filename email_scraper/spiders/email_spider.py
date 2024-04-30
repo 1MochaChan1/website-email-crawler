@@ -104,6 +104,6 @@ if(__name__=="__main__"):
     if (args.res):
         res_file = args.res
         
-    print(f"{Colors.PURPLE} {'+'*30}\nsrc:{src_file}\nres:{res_file}\n{'+'*30}{Colors.END}")
+    print(f"{Colors.PURPLE}{'+'*30}\nsrc:{src_file}\nres:{res_file}\n{'+'*30}{Colors.END}")
     process_creation()
     print(f"{Colors.BLUE + Colors.BOLD + Colors.ITALIC}{'-'*12} Process Ended {'-'*12}{Colors.END}")
