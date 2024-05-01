@@ -88,7 +88,7 @@ def process_creation():
             p1.start()
             p1.join()
        except Exception as e:
-           print(f"{Colors.RED}{e}{Colors.END}")
+           print(f"{Colors.RED}{e.with_traceback()}{Colors.END}")
            
            
 if(__name__=="__main__"):
