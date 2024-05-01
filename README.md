@@ -11,7 +11,7 @@ Tool that crawls list of websites given as a csv and finds emails against them a
 > [!IMPORTANT]
 > Make sure to have a column named `website` in your _src.csv_ file which would contain all the websites that we need to crawl
 
-1. Navigate to the folder spider `cd emaill_scraper\spiders`
+1. Navigate to the folder spider `cd email_scraper\spiders`
 2. You can either run the file: `email_spider.py` from an IDE.
 3. Alternatively, `email_spider.py` can be given arguements such as
     1. `--src {path_to_result_file}` - the flag specifies the input file from which you will take the data. By default it is set to _src.csv_.

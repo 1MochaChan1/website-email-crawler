@@ -21,7 +21,9 @@ def _create_res_if_not_present(res_file, src_file):
   
     df = pd.read_csv(src_file)
     res_df = pd.DataFrame()
-    for col in df.columns.to_list():
+    columns = df.columns.to_list()
+    columns.append('email')
+    for col in columns:
         res_df[col]=""
     res_df.to_csv(res_file, index=False, mode='a')
 
@@ -47,7 +49,7 @@ class EmailSpider(CrawlSpider):
         Rule(LinkExtractor(allow='team-page'), callback='parse_item',follow=True),     
     ]
     def parse_item(self, response):
-        _raw_emails = re.findall(r'[\w\.-]+@[\w\.-]+', response.text)
+        _raw_emails = re.findall(r'([a-zA-Z0-9+._-]+@[a-zA-Z0-9._-]+\.[(?!png|svg|jpeg|jpg|ico)a-zA-Z_-]+)', response.text)
         self.emails_found.update([email.lower() for email in _raw_emails])
     
     def close(spider, reason):
@@ -86,7 +88,7 @@ def process_creation():
             p1.start()
             p1.join()
        except Exception as e:
-           print(f"{Colors.RED}{e}{Colors.END}")
+           print(f"{Colors.RED}{e.with_traceback()}{Colors.END}")
            
            
 if(__name__=="__main__"):
@@ -103,7 +105,12 @@ if(__name__=="__main__"):
 
     if (args.res):
         res_file = args.res
+    else:
+        res_file = 'res-'+src_file
+    
         
     print(f"{Colors.PURPLE}{'+'*30}\nsrc:{src_file}\nres:{res_file}\n{'+'*30}{Colors.END}")
     process_creation()
     print(f"{Colors.BLUE + Colors.BOLD + Colors.ITALIC}{'-'*12} Process Ended {'-'*12}{Colors.END}")
+    
+# python email_spider.py --src "source_file.csv"
