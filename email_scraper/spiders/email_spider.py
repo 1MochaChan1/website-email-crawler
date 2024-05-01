@@ -1,4 +1,4 @@
-import re, tldextract
+import re, tldextract, logging
 import pandas as pd
 import argparse
 from colors import Colors
@@ -6,6 +6,12 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.crawler import CrawlerProcess
 from multiprocessing import Process
+
+# logging.configure_logging(install_root_handler=False)
+logging.basicConfig(
+    format='%(levelname)s: %(message)s',
+    level=logging.DEBUG
+)
 
 # HELPER
 def _get_domain(website:str):
@@ -78,7 +84,7 @@ def create_spider(data, src_file, res_file) -> EmailSpider:
 def process_creation():
     df = pd.read_csv(src_file)
     for _, row in df.iterrows():
-       try:
+        try:
             if(len(row['website']) < 1):
                 continue
             
@@ -87,14 +93,15 @@ def process_creation():
             p1 = Process(name=data['website'], target=create_spider, args=[data, src_file, res_file])
             p1.start()
             p1.join()
-       except Exception as e:
-           print(f"{Colors.RED}{e.with_traceback()}{Colors.END}")
+        except TypeError as e:
+            print(f"{Colors.RED}ALERT: Could not find any 'website' in the cell. Possibly the value for website in your csv file has been left blank{Colors.END}")
+        except KeyError as e:
+            print(f"{Colors.RED}ALERT: Possibly the column 'website' is not present in your csv file Either try adding such column or renaming an existing one{Colors.END}")
+        except Exception as e:
+           print(f"{Colors.RED}{e}{Colors.END}")
            
            
-if(__name__=="__main__"):
-    res_file='res.csv'
-    src_file='src.csv'
-    
+def handle_cmd_args():
     parser = argparse.ArgumentParser(description='Crawls given websites in the csv file and returns the data with the email against their names.')
     parser.add_argument('--src', metavar='src', type=str, help='Enter the path of the source file which consists of websites needed to crawl')
     parser.add_argument('--res', metavar='res', type=str, help='Enter the path of the file in which the results needs to be stored.')
@@ -108,9 +115,17 @@ if(__name__=="__main__"):
     else:
         res_file = 'res-'+src_file
     
+    return res_file,src_file
+
+if(__name__=="__main__"):
+    res_file='res.csv'
+    src_file='src.csv'
+    
+    res_file, src_file = handle_cmd_args()
+    
         
     print(f"{Colors.PURPLE}{'+'*30}\nsrc:{src_file}\nres:{res_file}\n{'+'*30}{Colors.END}")
     process_creation()
     print(f"{Colors.BLUE + Colors.BOLD + Colors.ITALIC}{'-'*12} Process Ended {'-'*12}{Colors.END}")
-    
+
 # python email_spider.py --src "source_file.csv"
