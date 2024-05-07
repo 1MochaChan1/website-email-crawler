@@ -34,7 +34,7 @@ def _create_res_if_not_present(res_file, src_file):
     res_df.to_csv(res_file, index=False, mode='a')
 
 def remove_catch_all_emails(emails:list):
-    ex_list = ["mail", "info", "contact", "support", "johndoe", "logo", "exams", "media", "service", "recruitment", "enquiries", "team"]
+    ex_list = ["mail", "info", "contact", "support", "johndoe", "logo", "exams", "media", "service", "recruitment", "enquiries", "team", "@sentry","business","jpeg","png","jpg","assistant", "hello","example","example.com","press","office","wixpress.com"]
     res = []
     for email in emails:
         _break=False
