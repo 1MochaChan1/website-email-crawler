@@ -33,6 +33,20 @@ def _create_res_if_not_present(res_file, src_file):
         res_df[col]=""
     res_df.to_csv(res_file, index=False, mode='a')
 
+def remove_catch_all_emails(emails:list):
+    ex_list = ["mail", "info", "contact", "support", "johndoe", "logo", "exams", "media", "service", "recruitment", "enquiries", "team"]
+    res = []
+    for email in emails:
+        _break=False
+        for ex in ex_list:
+            if(ex in email):
+                _break=True
+                break
+        if(_break):
+            continue
+        res.append(email)
+
+    return res
 
 class EmailSpider(CrawlSpider):
     emails_found = set()
@@ -55,11 +69,13 @@ class EmailSpider(CrawlSpider):
         Rule(LinkExtractor(allow='team-page'), callback='parse_item',follow=True),     
     ]
     def parse_item(self, response):
-        _raw_emails = re.findall(r'([a-zA-Z0-9+._-]+@[a-zA-Z0-9._-]+\.[(?!png|svg|jpeg|jpg|ico)a-zA-Z_-]+)', response.text)
-        self.emails_found.update([email.lower() for email in _raw_emails])
+        _raw_emails = re.findall(r'([a-zA-Z0-9+._-]+@[a-zA-Z0-9._-]+\.[(?!png|webp|svg|jpeg|jpg|ico)a-zA-Z_-]+)', response.text)
+        _cleaned_emails = remove_catch_all_emails([email.lower() for email in _raw_emails])
+        self.emails_found.update(_cleaned_emails)
     
     def close(spider, reason):
         print(Colors.GREEN,"="*40+'\n',spider.emails_found,'\n'+"="*40, Colors.END)
+        
         if(len(spider.emails_found) > 0):
             spider.data['email'] = [', '.join(spider.emails_found)] 
             _create_res_if_not_present(spider.res_file, spider.src_file)
@@ -102,6 +118,7 @@ def process_creation():
            
            
 def handle_cmd_args():
+    global res_file, src_file
     parser = argparse.ArgumentParser(description='Crawls given websites in the csv file and returns the data with the email against their names.')
     parser.add_argument('--src', metavar='src', type=str, help='Enter the path of the source file which consists of websites needed to crawl')
     parser.add_argument('--res', metavar='res', type=str, help='Enter the path of the file in which the results needs to be stored.')
@@ -116,6 +133,13 @@ def handle_cmd_args():
         res_file = 'res-'+src_file
     
     return res_file,src_file
+
+
+def verify_emails(src_file_name:str):
+    res_file_name = 'res-' + src_file_name
+    
+    # make request to the workflow.
+    
 
 if(__name__=="__main__"):
     res_file='res.csv'
