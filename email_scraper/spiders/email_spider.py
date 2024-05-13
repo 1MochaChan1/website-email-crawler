@@ -1,4 +1,4 @@
-import re, tldextract, logging
+import re, tldextract, logging, os
 import pandas as pd
 import argparse
 from colors import Colors
@@ -7,20 +7,13 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.crawler import CrawlerProcess
 from multiprocessing import Process
 
-# logging.configure_logging(install_root_handler=False)
-logging.basicConfig(
-    format='%(levelname)s: %(message)s',
-    level=logging.DEBUG
-)
 
 # HELPER
 def _get_domain(website:str):
     ext = tldextract.extract(website)
     return ext.domain+'.'+ext.suffix
 
-def _create_res_if_not_present(res_file, src_file):
-    import os
-    
+def _create_res_if_not_present(res_file, src_file):    
     if(os.path.isfile(res_file)):
         if(os.stat(res_file).st_size != 0):
             return
@@ -34,7 +27,7 @@ def _create_res_if_not_present(res_file, src_file):
     res_df.to_csv(res_file, index=False, mode='a')
 
 def remove_catch_all_emails(emails:list):
-    ex_list = ["mail", "info", "contact", "support", "johndoe", "logo", "exams", "media", "service", "recruitment", "enquiries", "team", "@sentry","business","jpeg","png","jpg","assistant", "hello","example","example.com","press","office","wixpress.com","user","@domain.com"]
+    ex_list = ["mail", "info", "contact", "support", "johndoe", "logo", "exams", "media", "service", "recruitment", "enquiries", "team", "@sentry","business","jpeg","png","jpg","assistant", "hello","example","example.com","press","office","wixpress.com","user","@domain.com","communications",".gif"]
     res = []
     for email in emails:
         _break=False
@@ -48,6 +41,15 @@ def remove_catch_all_emails(emails:list):
 
     return res
 
+def make_res_path(src_path:str) -> str:
+    path = os.path.split(src_path)
+    if (not len(path[0]) > 0):
+        return f'res-{src_file}'
+    # This will give problems on Linux or any OS apart from Windows.
+    return path[0]+'\\res-'+path[1]
+
+
+# CRAWLER
 class EmailSpider(CrawlSpider):
     emails_found = set()
     name = "email_spider"
@@ -103,12 +105,13 @@ def process_creation():
         try:
             if(len(row['website']) < 1):
                 continue
-            
+
             row['email'] = ''
             data = row.to_dict()
             p1 = Process(name=data['website'], target=create_spider, args=[data, src_file, res_file])
             p1.start()
             p1.join()
+            
         except TypeError as e:
             print(f"{Colors.RED}ALERT: Could not find any 'website' in the cell. Possibly the value for website in your csv file has been left blank{Colors.END}")
         except KeyError as e:
@@ -130,19 +133,15 @@ def handle_cmd_args():
     if (args.res):
         res_file = args.res
     else:
-        res_file = 'res-'+src_file
+        os.path.split(src_file)
+        res_file = make_res_path(src_file)
     
     return res_file,src_file
 
 
-def verify_emails(src_file_name:str):
-    res_file_name = 'res-' + src_file_name
-    
-    # make request to the workflow.
-    
 
 if(__name__=="__main__"):
-    res_file='res.csv'
+    res_file=''
     src_file='src.csv'
     
     res_file, src_file = handle_cmd_args()
