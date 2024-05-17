@@ -1,5 +1,5 @@
 import re, os, argparse, tldextract
-from colors import Colors
+from helpers.colors import Colors
 import pandas as pd
 from multiprocessing import Process
 from scrapy.crawler import CrawlerProcess

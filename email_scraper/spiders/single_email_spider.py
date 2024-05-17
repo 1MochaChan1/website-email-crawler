@@ -1,10 +1,8 @@
-import re, tldextract, logging, os
-import pandas as pd
-import argparse
-from colors import Colors
+import re
+from email_scraper.helpers.colors import Colors
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
-from helpers import FileHandlingHelper, EmailListHelper, CMDArgsHelper, ProcessCreator
+from email_scraper.helpers.helpers import FileHandlingHelper, EmailListHelper, CMDArgsHelper, ProcessCreator
 
 emails_found = set()
 

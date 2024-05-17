@@ -1,10 +1,11 @@
-import re, tldextract, logging, os
+import re, sys
+sys.path.append(sys.path[0] + '/..')
+
 import pandas as pd
-import argparse
-from colors import Colors
+from helpers.colors import Colors
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
-from helpers import FileHandlingHelper, EmailListHelper, CMDArgsHelper, ProcessCreator
+from helpers.helpers import FileHandlingHelper, EmailListHelper, CMDArgsHelper, ProcessCreator
 
 # CRAWLER
 class EmailSpider(CrawlSpider):
