@@ -1,8 +1,8 @@
 import re
-from email_scraper.helpers.colors import Colors
+from helpers.colors import Colors
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
-from email_scraper.helpers.helpers import FileHandlingHelper, EmailListHelper, CMDArgsHelper, ProcessCreator
+from helpers.utils import FileHandlingHelper, EmailListHelper, CMDArgsHelper, ProcessCreator
 
 emails_found = set()
 

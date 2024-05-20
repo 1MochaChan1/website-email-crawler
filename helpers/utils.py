@@ -1,5 +1,5 @@
 import re, os, argparse, tldextract
-from helpers.colors import Colors
+from .colors import Colors
 import pandas as pd
 from multiprocessing import Process
 from scrapy.crawler import CrawlerProcess
@@ -11,15 +11,26 @@ class CMDArgsHelper():
     '''
     def __init__(self) -> None:
         pass
-   
+    
+    def list_of_strings(arg):
+        return arg.split(',')
+    
+    
     def handle_cmd_args(self):
         res_path=None
-        src_path='src.csv'
+        src_path=None
         web=None
+        cleanup=False
+        keep_cols = False
+        crawl_csv=False
+        
         parser = argparse.ArgumentParser(description='Crawls given websites in the csv file and returns the data with the email against their names.')
-        parser.add_argument('--src', metavar='src', type=str, help='Enter the path of the source file which consists of websites needed to crawl')
+        parser.add_argument('--src', metavar='src', required=True, type=str, help='<Required> Enter the path of the source file which consists of websites needed to crawl')
         parser.add_argument('--res', metavar='res', type=str, help='Enter the path of the file in which the results needs to be stored.')
         parser.add_argument('--web', metavar='web', type=str, help='Enter the url of the website you want to crawl for emails.')
+        parser.add_argument('--cleanup',  action='store_true', help='Enter the path of the csv file containing the column "website" to clean it.')
+        parser.add_argument('--keep_cols', metavar='keep_cols', nargs='+', help='Enter the list of columns that you want keep from a csv file and the rest of them will be dropped in the final file.')
+        parser.add_argument('--crawl_csv',  action='store_true', help='Use this flag if you want to crawl websites inside a csv file.')
         
         args = parser.parse_args()
         if(args.web):
@@ -30,11 +41,22 @@ class CMDArgsHelper():
 
         if (args.res):
             res_path = args.res
-        else:
-            os.path.split(src_path)
-            res_path = FileHandlingHelper().make_res_path(src_path)
         
-        return res_path,src_path,web
+        if (args.cleanup == True):
+            cleanup = args.cleanup
+            
+        if (args.keep_cols):
+            keep_cols = args.keep_cols
+            
+        if (args.crawl_csv):
+            crawl_csv = args.crawl_csv
+        
+        else:
+            if(src_path):
+                os.path.split(src_path)
+                res_path = FileHandlingHelper().make_res_path(src_path)
+        
+        return {'res_path':res_path,'src_path':src_path,'web':web, 'cleanup':cleanup, 'keep_cols':keep_cols, 'crawl_csv':crawl_csv}
 
 
 class EmailListHelper():
@@ -66,6 +88,11 @@ class FileHandlingHelper():
         pass
     
     def make_res_path(self, src_path:str, prefix:str='res-') -> str:
+        '''
+        Automatically creates a path in the same directory of the `src_path`.
+        
+        A `prefix` could be added before the file naem to avoid conflicts. default is 'res-'
+        '''
         path = os.path.split(src_path)
         if (not len(path[0]) > 0):
             return f'res-{src_path}'
@@ -159,8 +186,6 @@ class ExcelHelper():
             before = _df.at[row.Index, column_name]   
             base_url = re.match(r'^(https?:\/\/[^\/]+)', before)
             _df.at[row.Index, column_name] = base_url.group()
-            # after = _df.at[row.Index, column_name]
-            # print(f"\nBefore: {before}\nAfter: {after}")
         return _df
         
     
@@ -179,21 +204,41 @@ class ExcelHelper():
         return _df
 
     def auto_cleanup(self, column_name:str)-> pd.DataFrame:
+        '''
+        Does three things in one command.
+        
+        1. Drops records with `null` values in given `column_name`
+        2. Strips the slug of website to keep only the base URL
+        3. Removes duplicate base URLs.
+        '''
         res = self.drop_na(column_name)
         res1 = self.strip_slug(column_name, dataframe=res)
         res2 = self.remove_duplicates(column_name, dataframe=res1)
         
         return res2
+    
+    def choose_columns_to_keep(self, columns:list[str], dataframe=None):
+        _df:pd.DataFrame
+        if(dataframe is not None):
+            _df = dataframe
+        else:
+            _df = self.base_df.loc[:]
+
+        return _df[columns]
 
 if __name__ == "__main__":
-    filename="..\\data\\doctors.csv"
-    res = FileHandlingHelper().make_res_path(filename, prefix="cleaned-")
+    pass
+    # filename="D:\\1_Downloads\\ConsultingMerge.csv"
+    # res = FileHandlingHelper().make_res_path(filename, prefix="cleaned-")
     
-    helper = ExcelHelper(filename)
+    # helper = ExcelHelper(filename)
 
-    df = helper.auto_cleanup('website')
-    df.to_csv(res, index=False)
+    # df = helper.auto_cleanup('website')
+    # df.to_csv(res, index=False)
 
+    # filename = '..\\data\\res-cleaned-ConsultingMerge_1.csv'
+    # res_sheet = ExcelHelper(filename)
+    # res_sheet.choose_column(['name','phone_number','email', 'website' ,'review_count', 'rating'])
 
 
 

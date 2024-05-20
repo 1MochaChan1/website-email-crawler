@@ -1,11 +1,11 @@
 import re, sys
-sys.path.append(sys.path[0] + '/..')
+
 
 import pandas as pd
+from helpers.utils import FileHandlingHelper, EmailListHelper, CMDArgsHelper, ProcessCreator
 from helpers.colors import Colors
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
-from helpers.helpers import FileHandlingHelper, EmailListHelper, CMDArgsHelper, ProcessCreator
 
 # CRAWLER
 class EmailSpider(CrawlSpider):
@@ -48,12 +48,5 @@ class EmailSpider(CrawlSpider):
 
 
 if(__name__=="__main__"):
-    
-    res_path, src_path, web  = CMDArgsHelper().handle_cmd_args()
-    
-        
-    print(f"{Colors.PURPLE}{'+'*30}\nsrc:{src_path}\nres:{res_path}\n{'+'*30}{Colors.END}")
-    ProcessCreator(src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes()
-    print(f"{Colors.BLUE + Colors.BOLD + Colors.ITALIC}{'-'*12} Process Ended {'-'*12}{Colors.END}")
+    pass
 
-# python email_spider.py --src "source_file.csv"
