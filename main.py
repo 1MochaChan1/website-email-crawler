@@ -46,9 +46,8 @@ if __name__ == "__main__":
         file_helper = FileHandlingHelper()
         
         if(crawl_csv==True):
-            encapsulate_func(
-                ProcessCreator(src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes()
-            )
+            ProcessCreator(src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes()
+            
         if(cleanup):
             clean_file(src_path, prefix='cleaned-')
             
@@ -56,6 +55,6 @@ if __name__ == "__main__":
             keep_columns(columns=keep_cols, prefix='trimmed')
     
     if(web):
-        encapsulate_func(
-                lambda:ProcessCreator(spider=SingleEmailSpider).create_spider_and_crawl({'website':web})
-            )
+        data = ProcessCreator(spider=SingleEmailSpider).create_spider_and_crawl({'website':web})
+        print(f'{Colors.BROWN}\n+{"+"*10}\n{data}\n{"+"*10}{Colors.END}')
+        

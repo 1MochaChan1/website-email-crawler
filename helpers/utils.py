@@ -133,6 +133,8 @@ class ProcessCreator():
         self.spider.start_urls = [website]
         process.crawl(self.spider)
         process.start()
+        
+        return self.spider.data
     
     def create_spider_processes(self):
         df = pd.read_csv(self.src_path)
