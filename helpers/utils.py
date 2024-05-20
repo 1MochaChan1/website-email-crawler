@@ -25,7 +25,7 @@ class CMDArgsHelper():
         crawl_csv=False
         
         parser = argparse.ArgumentParser(description='Crawls given websites in the csv file and returns the data with the email against their names.')
-        parser.add_argument('--src', metavar='src', required=True, type=str, help='<Required> Enter the path of the source file which consists of websites needed to crawl')
+        parser.add_argument('--src', metavar='src', type=str, help='<Required> Enter the path of the source file which consists of websites needed to crawl')
         parser.add_argument('--res', metavar='res', type=str, help='Enter the path of the file in which the results needs to be stored.')
         parser.add_argument('--web', metavar='web', type=str, help='Enter the url of the website you want to crawl for emails.')
         parser.add_argument('--cleanup',  action='store_true', help='Enter the path of the csv file containing the column "website" to clean it.')
