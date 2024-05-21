@@ -1,7 +1,7 @@
 import re, os, argparse, tldextract
 from .colors import Colors
 import pandas as pd
-from multiprocessing import Process
+from multiprocessing import Process, Queue, Pool
 from scrapy.crawler import CrawlerProcess
 
 
@@ -100,10 +100,11 @@ class FileHandlingHelper():
         return f"{path[0]}\\{prefix}{path[1]}"
 
 
-    def create_res_if_not_present(self,res_path, src_path):    
-        if(os.path.isfile(res_path)):
-            if(os.stat(res_path).st_size != 0):
-                return
+    def create_res_if_not_present(self,src_path:str,res_path:str=None):    
+        if(res_path):
+            if(os.path.isfile(res_path)):
+                if(os.stat(res_path).st_size != 0):
+                    return
     
         df = pd.read_csv(src_path)
         res_df = pd.DataFrame()
@@ -121,7 +122,7 @@ class ProcessCreator():
         self.res_path = res_path
         self.spider = spider
         
-    def create_spider_and_crawl(self, data):
+    def create_spider_and_crawl(self, data:dict):
         website = data['website']
         
         process = CrawlerProcess()
@@ -155,6 +156,60 @@ class ProcessCreator():
                 print(f"{Colors.RED}ALERT: Possibly the column 'website' is not present in your csv file Either try adding such column or renaming an existing one{Colors.END}")
             except Exception as e:
                 print(f"{Colors.RED}{e}{Colors.END}")
+    
+    
+    
+    def get_params(self):
+        df = pd.read_csv(self.src_path)
+        data = df.to_dict('records')
+        for rec in data:
+            yield rec
+    
+    def create_spider_processes_pool(self):
+        data=None
+        try:
+            pool = Pool()
+        
+            df = pd.read_csv(self.src_path)
+            data = df.to_dict('records')
+            
+            data = pool.map(self.create_spider_and_crawl, data)
+        except:
+            print(f'{Colors.RED}Something went wrong when running the pooled processes{Colors.END}')
+            return data
+        finally:
+            return data
+        
+        # def terminate():
+        #     pool.terminate()
+        #     pool.close()
+        #     pool.join()
+        # iterable.terminate = terminate
+        # return iterable
+
+        # for res in results:
+        #     print(f'\n{Colors.RED}{res}{Colors.END}\n')
+        #     yield res
+                        
+        
+        # for _, row in df.iterrows():
+        #     try:
+        #         if(len(row['website']) < 1):
+        #             continue
+
+        #         row['email'] = ''
+        #         data = row.to_dict()
+        #         p1 = Process(name=data['website'], target=self.create_spider_and_crawl, args=[data])
+        #         p1.start()
+        #         p1.join()
+                
+        #     except TypeError as e:
+        #         print(f"{Colors.RED}ALERT: Could not find any 'website' in the cell. Possibly the value for website in your csv file has been left blank{Colors.END}")
+        #     except KeyError as e:
+        #         print(f"{Colors.RED}ALERT: Possibly the column 'website' is not present in your csv file Either try adding such column or renaming an existing one{Colors.END}")
+        #     except Exception as e:
+        #         print(f"{Colors.RED}{e}{Colors.END}")
+        #     yield data
 
 
 

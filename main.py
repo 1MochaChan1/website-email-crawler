@@ -29,7 +29,13 @@ def keep_columns(columns:list['str'], prefix:str=None,_res_path:str=None):
     
     df.to_csv(_res_path, index=False)
     return df
-        
+
+
+def save_csv(data:list[dict],src_path:str, res_path:str=None):
+    import pandas as pd
+    FileHandlingHelper().create_res_if_not_present(res_path, src_path)
+    df = pd.DataFrame.from_records(data, index=False)
+    df.to_csv(res_path, mode='a', index=False, header=False)       
 
 # Entry Point
 if __name__ == "__main__":
@@ -46,15 +52,19 @@ if __name__ == "__main__":
         file_helper = FileHandlingHelper()
         
         if(crawl_csv==True):
-            ProcessCreator(src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes()
+            # ProcessCreator(src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes()
+            res_map = ProcessCreator(
+                src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes_pool()
+            print(f'{Colors.PURPLE}{res_map}{Colors.END}')
+
             
         if(cleanup):
             clean_file(src_path, prefix='cleaned-')
             
         if(keep_cols):
-            keep_columns(columns=keep_cols, prefix='trimmed')
+            keep_columns(columns=keep_cols, prefix='trimmed-')
     
     if(web):
         data = ProcessCreator(spider=SingleEmailSpider).create_spider_and_crawl({'website':web})
         print(f'{Colors.BROWN}\n+{"+"*10}\n{data}\n{"+"*10}{Colors.END}')
-        
+    
