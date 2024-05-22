@@ -9,12 +9,6 @@ class CMDArgsHelper():
     '''
     This is an API for creating Arguments
     '''
-    def __init__(self) -> None:
-        pass
-    
-    def list_of_strings(arg):
-        return arg.split(',')
-    
     
     def handle_cmd_args(self):
         res_path=None
@@ -60,6 +54,9 @@ class CMDArgsHelper():
 
 
 class EmailListHelper():
+    '''
+    This class provides helpers that aid in cleaning the emails
+    '''
     def get_domain(self, website:str):
         ext = tldextract.extract(website)
         return ext.domain+'.'+ext.suffix
@@ -100,33 +97,46 @@ class FileHandlingHelper():
         return f"{path[0]}\\{prefix}{path[1]}"
 
 
-    def create_res_if_not_present(self,src_path:str,res_path:str=None):    
-        if(res_path):
-            if(os.path.isfile(res_path)):
-                if(os.stat(res_path).st_size != 0):
-                    return
-    
+    def create_res_if_not_present(self,src_path:str,res_path:str=None):   
+        '''
+        Creates a CSV file with only headers from the `src_files` along with an extra column 'email' and saves as `res_path`
+        '''
+         
+        if(res_path==None):
+            res_path = self.make_res_path(src_path)
+            
+        if(os.path.isfile(res_path)):
+            if(os.stat(res_path).st_size != 0):
+                return
+        
+            
         df = pd.read_csv(src_path)
-        res_df = pd.DataFrame()
+        _res_df = pd.DataFrame()
         columns = df.columns.to_list()
         columns.append('email')
         for col in columns:
-            res_df[col]=""
-        res_df.to_csv(res_path, index=False, mode='a')
+            _res_df[col]=""
+        _res_df.to_csv(res_path, index=False, mode='a')
 
 
 
 class ProcessCreator():
+    '''
+    Class that is responsible for creating spider processes to crawl the websites passed to it.
+    '''
     def __init__(self, spider, src_path:str=None, res_path:str=None) -> None:
         self.src_path = src_path
         self.res_path = res_path
         self.spider = spider
         
     def create_spider_and_crawl(self, data:dict):
+        '''
+        Creates a spider processes to crawl given website in `data`
+        Example:
+        `{'website':'http://example.com'}`
+        '''
         website = data['website']
-        
         process = CrawlerProcess()
-        
         self.spider.res_path = self.res_path
         self.spider.data = data
         self.spider.src_path = self.src_path
@@ -137,35 +147,38 @@ class ProcessCreator():
         
         return self.spider.data
     
-    def create_spider_processes(self):
-        df = pd.read_csv(self.src_path)
-        for _, row in df.iterrows():
-            try:
-                if(len(row['website']) < 1):
-                    continue
+    # def create_spider_processes(self):
+    #     df = pd.read_csv(self.src_path)
+    #     for _, row in df.iterrows():
+    #         try:
+    #             if(len(row['website']) < 1):
+    #                 continue
 
-                row['email'] = ''
-                data = row.to_dict()
-                p1 = Process(name=data['website'], target=self.create_spider_and_crawl, args=[data])
-                p1.start()
-                p1.join()
+    #             row['email'] = ''
+    #             data = row.to_dict()
+    #             p1 = Process(name=data['website'], target=self.create_spider_and_crawl, args=[data])
+    #             p1.start()
+    #             p1.join()
                 
-            except TypeError as e:
-                print(f"{Colors.RED}ALERT: Could not find any 'website' in the cell. Possibly the value for website in your csv file has been left blank{Colors.END}")
-            except KeyError as e:
-                print(f"{Colors.RED}ALERT: Possibly the column 'website' is not present in your csv file Either try adding such column or renaming an existing one{Colors.END}")
-            except Exception as e:
-                print(f"{Colors.RED}{e}{Colors.END}")
+    #         except TypeError as e:
+    #             print(f"{Colors.RED}ALERT: Could not find any 'website' in the cell. Possibly the value for website in your csv file has been left blank{Colors.END}")
+    #         except KeyError as e:
+    #             print(f"{Colors.RED}ALERT: Possibly the column 'website' is not present in your csv file Either try adding such column or renaming an existing one{Colors.END}")
+    #         except Exception as e:
+    #             print(f"{Colors.RED}{e}{Colors.END}")
     
     
     
-    def get_params(self):
-        df = pd.read_csv(self.src_path)
-        data = df.to_dict('records')
-        for rec in data:
-            yield rec
+    # def get_params(self):
+    #     df = pd.read_csv(self.src_path)
+    #     data = df.to_dict('records')
+    #     for rec in data:
+    #         yield rec
     
     def create_spider_processes_pool(self):
+        '''
+        Creates a pool of spider processes to crawl multiple websites
+        '''
         data=None
         try:
             pool = Pool()
@@ -179,48 +192,22 @@ class ProcessCreator():
             return data
         finally:
             return data
-        
-        # def terminate():
-        #     pool.terminate()
-        #     pool.close()
-        #     pool.join()
-        # iterable.terminate = terminate
-        # return iterable
-
-        # for res in results:
-        #     print(f'\n{Colors.RED}{res}{Colors.END}\n')
-        #     yield res
-                        
-        
-        # for _, row in df.iterrows():
-        #     try:
-        #         if(len(row['website']) < 1):
-        #             continue
-
-        #         row['email'] = ''
-        #         data = row.to_dict()
-        #         p1 = Process(name=data['website'], target=self.create_spider_and_crawl, args=[data])
-        #         p1.start()
-        #         p1.join()
-                
-        #     except TypeError as e:
-        #         print(f"{Colors.RED}ALERT: Could not find any 'website' in the cell. Possibly the value for website in your csv file has been left blank{Colors.END}")
-        #     except KeyError as e:
-        #         print(f"{Colors.RED}ALERT: Possibly the column 'website' is not present in your csv file Either try adding such column or renaming an existing one{Colors.END}")
-        #     except Exception as e:
-        #         print(f"{Colors.RED}{e}{Colors.END}")
-        #     yield data
 
 
 
 class ExcelHelper():
+    '''
+    A class responsible for handling operations related to csv files.
+    '''
     import pandas as pd
-    from copy import copy
     def __init__(self, filename:str) -> None:
         self.base_df = self.pd.read_csv(filename, index_col=False)
     
     
     def drop_na(self, column_name:str, dataframe=None) -> pd.DataFrame:
+        '''
+        Drops the records having null values in the column: `column_name`
+        '''
         if(dataframe is not None):
             _df = dataframe
         else:
@@ -274,7 +261,10 @@ class ExcelHelper():
         
         return res2
     
-    def choose_columns_to_keep(self, columns:list[str], dataframe=None):
+    def choose_columns_to_keep(self, columns:list[str], dataframe=None) -> pd.DataFrame:
+        '''
+        Choose which columns to keep in a csv file. Returns a Datafarme
+        '''
         _df:pd.DataFrame
         if(dataframe is not None):
             _df = dataframe

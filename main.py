@@ -15,8 +15,7 @@ def clean_file(src_path:str, prefix:str=None,_res_path:str=None):
     if(_res_path):
         df.to_csv(_res_path)
         return df
-    helper = FileHandlingHelper()
-    _res_path = helper.make_res_path(src_path, prefix=prefix)
+    _res_path = file_helper.make_res_path(src_path, prefix=prefix)
     df.to_csv(_res_path)
     return df
 
@@ -33,9 +32,13 @@ def keep_columns(columns:list['str'], prefix:str=None,_res_path:str=None):
 
 def save_csv(data:list[dict],src_path:str, res_path:str=None):
     import pandas as pd
-    FileHandlingHelper().create_res_if_not_present(res_path, src_path)
-    df = pd.DataFrame.from_records(data, index=False)
-    df.to_csv(res_path, mode='a', index=False, header=False)       
+    
+    if(res_path==None):
+        res_path = file_helper.make_res_path(src_path)
+    file_helper.create_res_if_not_present(res_path, src_path)
+    df = pd.DataFrame.from_records(data)
+    df.to_csv(res_path, mode='a', index=False, header=False)
+    print(f'{Colors.GREEN} file saved as: {res_path}{Colors.END}')
 
 # Entry Point
 if __name__ == "__main__":
@@ -55,7 +58,7 @@ if __name__ == "__main__":
             # ProcessCreator(src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes()
             res_map = ProcessCreator(
                 src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes_pool()
-            print(f'{Colors.PURPLE}{res_map}{Colors.END}')
+            save_csv(res_map, src_path)
 
             
         if(cleanup):

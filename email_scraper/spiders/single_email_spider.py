@@ -35,14 +35,8 @@ class SingleEmailSpider(CrawlSpider):
         self.data['email'] = emails_found
     
     def close(spider, reason):
-        print(f"{Colors.GREEN}{'•'*30}\nEmails Found:\n{emails_found}\n{'•'*30}{Colors.END}")
-        
-    #     if(len(spider.emails_found) > 0):
-    #         spider.data['email'] = [', '.join(spider.emails_found)] 
-    #         FileHandlingHelper().create_res_if_not_present(spider.res_path, spider.src_path)
-    #         df = pd.DataFrame(spider.data)
-    #         df.to_csv(spider.res_path, mode='a', index=False, header=False)
-
+        # print(f"{Colors.GREEN}{'•'*30}\nEmails Found:\n{emails_found}\n{'•'*30}{Colors.END}")
+        pass
 
 if(__name__=="__main__"):
     pass    
