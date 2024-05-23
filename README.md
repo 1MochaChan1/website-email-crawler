@@ -18,3 +18,7 @@ Tool that crawls list of websites given as a csv and finds emails against them a
     2. `--res {path_to_result_file}` - ((optional)) the flag specifies which file you want to store the output in, if the file doesn't exists it will create on with the same headers as the source (src) file. By default it is set to _res.csv_.
 4. Finally you can call run the `email_spider.py` file using the following command:
     - `python email_spider.py --src 'path/to/src.csv'`
+
+
+### Caveat
+1. Still not able to parse header and footer of websites. Will try BS4 for that probably idk.
