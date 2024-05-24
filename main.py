@@ -16,7 +16,8 @@ def clean_file(src_path:str, prefix:str=None,_res_path:str=None):
         df.to_csv(_res_path)
         return df
     _res_path = file_helper.make_res_path(src_path, prefix=prefix)
-    df.to_csv(_res_path)
+    df.to_csv(_res_path, index=False)
+    print(f'{Colors.GREEN}file saved at: {_res_path}{Colors.END}')
     return df
 
 def keep_columns(columns:list['str'], prefix:str=None,_res_path:str=None):
@@ -25,8 +26,8 @@ def keep_columns(columns:list['str'], prefix:str=None,_res_path:str=None):
         df.to_csv(_res_path)
         return df
     _res_path = file_helper.make_res_path(src_path, prefix=prefix)
-    
     df.to_csv(_res_path, index=False)
+    print(f'{Colors.GREEN}file saved at: {_res_path}{Colors.END}')
     return df
 
 
@@ -35,7 +36,7 @@ def save_csv(data:list[dict],src_path:str, res_path:str=None):
     
     if(res_path==None):
         res_path = file_helper.make_res_path(src_path)
-    file_helper.create_res_if_not_present(res_path, src_path)
+    file_helper.create_res_if_not_present(src_path, res_path)
     df = pd.DataFrame.from_records(data)
     df.to_csv(res_path, mode='a', index=False, header=False)
     print(f'{Colors.GREEN} file saved as: {res_path}{Colors.END}')
@@ -43,6 +44,8 @@ def save_csv(data:list[dict],src_path:str, res_path:str=None):
 # Entry Point
 if __name__ == "__main__":
     args  = CMDArgsHelper().handle_cmd_args()
+    file_helper = FileHandlingHelper()
+    
     res_path =args['res_path']
     src_path=args['src_path']
     web=args['web']
@@ -52,14 +55,14 @@ if __name__ == "__main__":
 
     if(src_path):
         excel_helper = ExcelHelper(src_path)
-        file_helper = FileHandlingHelper()
         
         if(crawl_csv==True):
             # ProcessCreator(src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes()
             res_map = ProcessCreator(
-                src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes_pool()
+                # src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes_pool()
+                src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes_sequence()
             save_csv(res_map, src_path)
-
+            # print(f'{Colors.GREEN}{res_map}{Colors.END}')
             
         if(cleanup):
             clean_file(src_path, prefix='cleaned-')
@@ -70,4 +73,3 @@ if __name__ == "__main__":
     if(web):
         data = ProcessCreator(spider=SingleEmailSpider).create_spider_and_crawl({'website':web})
         print(f'{Colors.BROWN}\n+{"+"*10}\n{data}\n{"+"*10}{Colors.END}')
-    
