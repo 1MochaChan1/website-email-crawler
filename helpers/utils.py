@@ -2,7 +2,7 @@ from scrapy.signals import spider_closed
 import re, os, argparse, tldextract
 from .colors import Colors
 import pandas as pd
-from multiprocessing import Process, Queue, Pool
+from multiprocessing import Process, Pool
 from scrapy.crawler import CrawlerProcess
 
 
@@ -146,17 +146,13 @@ class ProcessCreator():
         self.spider.allowed_domains = [EmailListHelper().get_domain(website)]
         self.spider.start_urls = [website]
         process.crawl(self.spider)
-        for crawler in process.crawlers:
-            crawler.signals.connect(self.spider_ended, signal=spider_closed)
+        # for crawler in process.crawlers:
+        #     crawler.signals.connect(self.spider_ended, signal=spider_closed)
         process.start()   
         process.join()
-        
         return self.spider.data
     
-    
-    def spider_ended(self, spider, reason):
-        self.mapped_data.append(spider.data)
-        print(f"{Colors.PURPLE}{'-'*10}Spider Ended{'-'*10}{Colors.END}")
+
     
     def create_spider_processes_sequence(self):
         '''
@@ -173,13 +169,13 @@ class ProcessCreator():
                 p1 = Process(name=data['website'], target=self.create_spider_and_crawl, args=[data])
                 p1.start()
                 p1.join()
-                self.mapped_data.append(data)
             except TypeError as e:
                 print(f"{Colors.RED}ALERT: Could not find any 'website' in the cell. Possibly the value for website in your csv file has been left blank{Colors.END}")
             except KeyError as e:
                 print(f"{Colors.RED}ALERT: Possibly the column 'website' is not present in your csv file Either try adding such column or renaming an existing one{Colors.END}")
             except Exception as e:
                 print(f"{Colors.RED}{e}{Colors.END}")
+        
         return self.mapped_data
     
     

@@ -57,12 +57,11 @@ if __name__ == "__main__":
         excel_helper = ExcelHelper(src_path)
         
         if(crawl_csv==True):
-            # ProcessCreator(src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes()
-            res_map = ProcessCreator(
-                # src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes_pool()
-                src_path=src_path, res_path=res_path, spider=EmailSpider).create_spider_processes_sequence()
-            save_csv(res_map, src_path)
-            # print(f'{Colors.GREEN}{res_map}{Colors.END}')
+            process_creator = ProcessCreator( src_path=src_path, res_path=res_path, spider=EmailSpider)
+            
+            res_map = process_creator.create_spider_processes_sequence()
+            # save_csv(res_map, src_path)
+            # print(f'{Colors.LIGHT_BLUE}{res_map}{Colors.END}')
             
         if(cleanup):
             clean_file(src_path, prefix='cleaned-')
