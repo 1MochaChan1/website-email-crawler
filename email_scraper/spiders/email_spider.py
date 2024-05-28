@@ -7,6 +7,17 @@ from helpers.colors import Colors
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
 
+
+def save_csv(data:map,src_path:str, res_path:str=None):
+    import pandas as pd
+    file_helper = FileHandlingHelper()
+    if(res_path==None):
+        res_path = file_helper.make_res_path(src_path)
+    file_helper.create_res_if_not_present(src_path, res_path)
+    df = pd.DataFrame.from_dict(data)
+    df.to_csv(res_path, mode='a', index=False, header=False)
+    print(f'{Colors.GREEN} file saved as: {res_path}{Colors.END}')
+
 # CRAWLER
 class EmailSpider(CrawlSpider):
     emails_found = set()
@@ -28,6 +39,7 @@ class EmailSpider(CrawlSpider):
         Rule(LinkExtractor(allow='agents'), callback='parse_item',follow=True),
         Rule(LinkExtractor(allow='team-page'), callback='parse_item',follow=True),     
     ]
+    
     def parse_item(self, response):
         _email_list_helper = EmailListHelper()
         _raw_emails = re.findall(r'([a-zA-Z0-9+._-]+@[a-zA-Z0-9._-]+\.[(?!png|webp|svg|jpeg|jpg|ico)a-zA-Z_-]+)', response.text)
@@ -40,6 +52,7 @@ class EmailSpider(CrawlSpider):
         
         if(len(spider.emails_found) > 0):
             spider.data['email'] = [', '.join(spider.emails_found)] 
+            save_csv(spider.data, spider.src_path)
         
 if(__name__=="__main__"):
     pass

@@ -1,7 +1,8 @@
+from scrapy.signals import spider_closed
 import re, os, argparse, tldextract
 from .colors import Colors
 import pandas as pd
-from multiprocessing import Process, Queue, Pool
+from multiprocessing import Process, Pool
 from scrapy.crawler import CrawlerProcess
 
 
@@ -57,12 +58,13 @@ class EmailListHelper():
     '''
     This class provides helpers that aid in cleaning the emails
     '''
+    
     def get_domain(self, website:str):
         ext = tldextract.extract(website)
         return ext.domain+'.'+ext.suffix
 
     def remove_catch_all_emails(self, emails:list):
-        ex_list = ["mail", "info", "contact", "support", "johndoe", "logo", "exams", "media", "service", "recruitment", "enquiries", "team", "@sentry","business","jpeg","png","jpg","assistant", "hello","example","example.com","press","office","wixpress.com","user","@domain.com","communications",".gif"]
+        ex_list = ["mail", "info", "contact", "support", "johndoe", "logo", "exams", "media", "service", "recruitment", "enquiries", "team", "@sentry","business","jpeg","png","jpg","assistant", "hello","example","example.com","press","office","wixpress.com","user","@domain.com","communications",".gif", 'internship', 'career']
         res = []
         for email in emails:
             _break=False
@@ -76,7 +78,34 @@ class EmailListHelper():
 
         return res
 
-    
+    def extract_emails(self, src_path:str, prefix:str='for-verif-'):
+        '''
+        Takes the `website` column and the `email`, maps an array of `email` to the `website`.
+        '''
+        email_data = []
+        
+        _df = pd.read_csv(src_path)
+        for _, row in _df.iterrows():
+            emails = row['email'].split(', ')
+            for email in emails:
+                email_data.append({'website':row['website'], 'email':email})
+            
+        email_csv = pd.DataFrame.from_records(email_data)
+        return email_csv        
+        
+        
+    def map_verified_email(self, src_path:str, verif_path:str):
+        _df_emails = pd.read_csv(verif_path)
+        _df_src = pd.read_csv(src_path)
+        _df_map = _df_src[:]
+        for _, row in _df_src.iterrows():
+            curr_website = row['website']
+            for _, e_row in _df_emails.iterrows():
+                verified_col_idx=0
+                if(curr_website==e_row['website']):
+                    _df_src[f'verified_email_{verified_col_idx}'] = e_row['email']
+                    verified_col_idx += 1
+
 class FileHandlingHelper():
     '''
     An easier way to handle file creation,saving and updating.
@@ -119,7 +148,8 @@ class FileHandlingHelper():
         _res_df.to_csv(res_path, index=False, mode='a')
 
 
-
+# TODO: 1. Create a Spider Extension
+#       2. Connect it to the spider close signal and call a function that stores yielded data.
 class ProcessCreator():
     '''
     Class that is responsible for creating spider processes to crawl the websites passed to it.
@@ -128,6 +158,7 @@ class ProcessCreator():
         self.src_path = src_path
         self.res_path = res_path
         self.spider = spider
+        self.mapped_data = []
         
     def create_spider_and_crawl(self, data:dict):
         '''
@@ -143,30 +174,37 @@ class ProcessCreator():
         self.spider.allowed_domains = [EmailListHelper().get_domain(website)]
         self.spider.start_urls = [website]
         process.crawl(self.spider)
-        process.start()
-        
+        # for crawler in process.crawlers:
+        #     crawler.signals.connect(self.spider_ended, signal=spider_closed)
+        process.start()   
+        process.join()
         return self.spider.data
     
-    # def create_spider_processes(self):
-    #     df = pd.read_csv(self.src_path)
-    #     for _, row in df.iterrows():
-    #         try:
-    #             if(len(row['website']) < 1):
-    #                 continue
 
-    #             row['email'] = ''
-    #             data = row.to_dict()
-    #             p1 = Process(name=data['website'], target=self.create_spider_and_crawl, args=[data])
-    #             p1.start()
-    #             p1.join()
-                
-    #         except TypeError as e:
-    #             print(f"{Colors.RED}ALERT: Could not find any 'website' in the cell. Possibly the value for website in your csv file has been left blank{Colors.END}")
-    #         except KeyError as e:
-    #             print(f"{Colors.RED}ALERT: Possibly the column 'website' is not present in your csv file Either try adding such column or renaming an existing one{Colors.END}")
-    #         except Exception as e:
-    #             print(f"{Colors.RED}{e}{Colors.END}")
     
+    def create_spider_processes_sequence(self):
+        '''
+        Creates individual instances of spider processes to crawl multiple websites
+        '''
+        df = pd.read_csv(self.src_path)
+        for _, row in df.iterrows():
+            try:
+                if(len(row['website']) < 1):
+                    continue
+
+                row['email'] = ''
+                data = row.to_dict()
+                p1 = Process(name=data['website'], target=self.create_spider_and_crawl, args=[data])
+                p1.start()
+                p1.join()
+            except TypeError as e:
+                print(f"{Colors.RED}ALERT: Could not find any 'website' in the cell. Possibly the value for website in your csv file has been left blank{Colors.END}")
+            except KeyError as e:
+                print(f"{Colors.RED}ALERT: Possibly the column 'website' is not present in your csv file Either try adding such column or renaming an existing one{Colors.END}")
+            except Exception as e:
+                print(f"{Colors.RED}{e}{Colors.END}")
+        
+        return self.mapped_data
     
     
     # def get_params(self):
@@ -180,18 +218,25 @@ class ProcessCreator():
         Creates a pool of spider processes to crawl multiple websites
         '''
         data=None
-        try:
-            pool = Pool()
+        pool = Pool()
         
-            df = pd.read_csv(self.src_path)
-            data = df.to_dict('records')
+        df = pd.read_csv(self.src_path)
+        data = df.to_dict('records')
+        
+        data = pool.map(self.create_spider_and_crawl, data)
+        
+        pool.close()
+        pool.join()
+        
+        return data
+        # try:
             
-            data = pool.map(self.create_spider_and_crawl, data)
-        except:
-            print(f'{Colors.RED}Something went wrong when running the pooled processes{Colors.END}')
-            return data
-        finally:
-            return data
+        # except Exception as e:
+        #     print(f'{Colors.RED} {e}\n')
+        #     print(f'Something went wrong when running the pooled processes{Colors.END}')
+        #     return data
+        # finally:
+        #     return data
 
 
 
@@ -227,9 +272,12 @@ class ExcelHelper():
             _df = self.base_df.loc[:]
 
         for row in _df.itertuples():
-            before = _df.at[row.Index, column_name]   
-            base_url = re.match(r'^(https?:\/\/[^\/]+)', before)
-            _df.at[row.Index, column_name] = base_url.group()
+            try:
+                before = _df.at[row.Index, column_name]   
+                base_url = re.match(r'^(https?:\/\/[^\/]+)', before)
+                _df.at[row.Index, column_name] = base_url.group()
+            except AttributeError as e:
+                print(f'{Colors.RED} {e} {Colors.END}')
         return _df
         
     
