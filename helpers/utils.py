@@ -58,12 +58,13 @@ class EmailListHelper():
     '''
     This class provides helpers that aid in cleaning the emails
     '''
+    
     def get_domain(self, website:str):
         ext = tldextract.extract(website)
         return ext.domain+'.'+ext.suffix
 
     def remove_catch_all_emails(self, emails:list):
-        ex_list = ["mail", "info", "contact", "support", "johndoe", "logo", "exams", "media", "service", "recruitment", "enquiries", "team", "@sentry","business","jpeg","png","jpg","assistant", "hello","example","example.com","press","office","wixpress.com","user","@domain.com","communications",".gif"]
+        ex_list = ["mail", "info", "contact", "support", "johndoe", "logo", "exams", "media", "service", "recruitment", "enquiries", "team", "@sentry","business","jpeg","png","jpg","assistant", "hello","example","example.com","press","office","wixpress.com","user","@domain.com","communications",".gif", 'internship', 'career']
         res = []
         for email in emails:
             _break=False
@@ -77,7 +78,34 @@ class EmailListHelper():
 
         return res
 
-    
+    def extract_emails(self, src_path:str, prefix:str='for-verif-'):
+        '''
+        Takes the `website` column and the `email`, maps an array of `email` to the `website`.
+        '''
+        email_data = []
+        
+        _df = pd.read_csv(src_path)
+        for _, row in _df.iterrows():
+            emails = row['email'].split(', ')
+            for email in emails:
+                email_data.append({'website':row['website'], 'email':email})
+            
+        email_csv = pd.DataFrame.from_records(email_data)
+        return email_csv        
+        
+        
+    def map_verified_email(self, src_path:str, verif_path:str):
+        _df_emails = pd.read_csv(verif_path)
+        _df_src = pd.read_csv(src_path)
+        _df_map = _df_src[:]
+        for _, row in _df_src.iterrows():
+            curr_website = row['website']
+            for _, e_row in _df_emails.iterrows():
+                verified_col_idx=0
+                if(curr_website==e_row['website']):
+                    _df_src[f'verified_email_{verified_col_idx}'] = e_row['email']
+                    verified_col_idx += 1
+
 class FileHandlingHelper():
     '''
     An easier way to handle file creation,saving and updating.

@@ -1,6 +1,6 @@
 from email_scraper.spiders.email_spider import EmailSpider
 from email_scraper.spiders.single_email_spider import SingleEmailSpider
-from helpers.utils import ProcessCreator, CMDArgsHelper, ExcelHelper, FileHandlingHelper
+from helpers.utils import ProcessCreator, CMDArgsHelper, ExcelHelper, FileHandlingHelper, EmailListHelper
 from helpers.colors import Colors
 
 
@@ -72,3 +72,6 @@ if __name__ == "__main__":
     if(web):
         data = ProcessCreator(spider=SingleEmailSpider).create_spider_and_crawl({'website':web})
         print(f'{Colors.BROWN}\n+{"+"*10}\n{data}\n{"+"*10}{Colors.END}')
+    
+    res = EmailListHelper().extract_emails('res-LegalConsultancies_1-6.csv')
+    res.to_csv('for-verif-res-LegalConsultancies_1-6.csv', index=False)
