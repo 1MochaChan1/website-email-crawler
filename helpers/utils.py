@@ -18,6 +18,8 @@ class CMDArgsHelper():
         cleanup=False
         keep_cols = False
         crawl_csv=False
+        make_csv_for_verif=False
+        map_verified_emails=None
         
         parser = argparse.ArgumentParser(description='Crawls given websites in the csv file and returns the data with the email against their names.')
         parser.add_argument('--src', metavar='src', type=str, help='<Required> Enter the path of the source file which consists of websites needed to crawl')
@@ -26,6 +28,9 @@ class CMDArgsHelper():
         parser.add_argument('--cleanup',  action='store_true', help='Enter the path of the csv file containing the column "website" to clean it.')
         parser.add_argument('--keep_cols', metavar='keep_cols', nargs='+', help='Enter the list of columns that you want keep from a csv file and the rest of them will be dropped in the final file.')
         parser.add_argument('--crawl_csv',  action='store_true', help='Use this flag if you want to crawl websites inside a csv file.')
+        parser.add_argument('--make_csv_for_verif', action='store_true', help='Enter the path of the src file')
+        parser.add_argument('--map_verified_emails', metavar='map_verified_emails', type=str, help='Enter the path of the file in which the verified emails are stored.')
+
         
         args = parser.parse_args()
         if(args.web):
@@ -46,12 +51,18 @@ class CMDArgsHelper():
         if (args.crawl_csv):
             crawl_csv = args.crawl_csv
         
+        if (args.make_csv_for_verif == True):
+            make_csv_for_verif = args.make_csv_for_verif
+        
+        if(args.map_verified_emails):
+            map_verified_emails = args.map_verified_emails
+        
         else:
             if(src_path):
                 os.path.split(src_path)
                 res_path = FileHandlingHelper().make_res_path(src_path)
         
-        return {'res_path':res_path,'src_path':src_path,'web':web, 'cleanup':cleanup, 'keep_cols':keep_cols, 'crawl_csv':crawl_csv}
+        return {'res_path':res_path,'src_path':src_path,'web':web, 'cleanup':cleanup, 'keep_cols':keep_cols, 'crawl_csv':crawl_csv, 'make_csv_for_verif':make_csv_for_verif, 'map_verified_emails':map_verified_emails}
 
 
 class EmailListHelper():
@@ -64,7 +75,16 @@ class EmailListHelper():
         return ext.domain+'.'+ext.suffix
 
     def remove_catch_all_emails(self, emails:list):
-        ex_list = ["mail", "info", "contact", "support", "johndoe", "logo", "exams", "media", "service", "recruitment", "enquiries", "team", "@sentry","business","jpeg","png","jpg","assistant", "hello","example","example.com","press","office","wixpress.com","user","@domain.com","communications",".gif", 'internship', 'career']
+        ex_list = [ "info@", "contact@", "support@", "help@", "service@", "admin@", 
+                   "team@", "hello@", "sales@", "inquiries@", "webmaster@", "office@", 
+                   "management@", "all@", "hr@", "johndoe@", "logo", "exams@", "media@", 
+                   "recruitment@", "enquiries@", "@sentry", "business@", "jpeg", "png", 
+                   "jpg", "assistant@", "example", "example.com", "press@", "wixpress.com", 
+                   "user@", "@domain.com", "communications@", ".gif", 'internship@',
+                   'career@', 'attorneys@', 'outreach@', 'members@', 'member@', 'marketing@', 'inquiry@',
+                   'receptionist@', 'staff@', 'administration@', 'partners@', 'admin@', 'apline@',
+                   'sentri.io','learnmore@']
+        
         res = []
         for email in emails:
             _break=False
@@ -78,9 +98,10 @@ class EmailListHelper():
 
         return res
 
-    def extract_emails(self, src_path:str, prefix:str='for-verif-'):
+    def extract_emails(self, src_path:str):
         '''
-        Takes the `website` column and the `email`, maps an array of `email` to the `website`.
+        Takes the `website` and the `email` column and creates and array of dicts with key, value pairs being `website` and `email` respectively.
+        You can upload this file to MillionVerifiers.com.
         '''
         email_data = []
         
@@ -95,16 +116,30 @@ class EmailListHelper():
         
         
     def map_verified_email(self, src_path:str, verif_path:str):
+        '''
+        This function returns a dcitionary with verified emails in their own columns, provided the columns passed to it has a column named `website`.
+        
+        The `verif_path` here refers to the file that was downloaded from MillionVerifiers.com after verification.
+        '''
+    
         _df_emails = pd.read_csv(verif_path)
         _df_src = pd.read_csv(src_path)
-        _df_map = _df_src[:]
+        _df_map = []
         for _, row in _df_src.iterrows():
             curr_website = row['website']
+            verified_col_idx=0
+            
             for _, e_row in _df_emails.iterrows():
-                verified_col_idx=0
                 if(curr_website==e_row['website']):
-                    _df_src[f'verified_email_{verified_col_idx}'] = e_row['email']
+                    row[f'verified_email_{verified_col_idx}'] = e_row['email']
+                    some = row.drop('email')
+                    _df_map.append(some.to_dict())
                     verified_col_idx += 1
+        _res = pd.DataFrame.from_records(_df_map)
+        _res.drop_duplicates('website', keep='last', inplace=True)
+        return _res
+
+
 
 class FileHandlingHelper():
     '''
@@ -121,7 +156,7 @@ class FileHandlingHelper():
         '''
         path = os.path.split(src_path)
         if (not len(path[0]) > 0):
-            return f'res-{src_path}'
+            return f'{prefix}{src_path}'
         # This will give problems on Linux or any OS apart from Windows.
         return f"{path[0]}\\{prefix}{path[1]}"
 

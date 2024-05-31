@@ -10,7 +10,7 @@ def encapsulate_func(function, title:str='START'):
     function()
     print(f"{Colors.BLUE + Colors.BOLD + Colors.ITALIC}{'-'*12} Process Ended {'-'*12}{Colors.END}")
 
-def clean_file(src_path:str, prefix:str=None,_res_path:str=None):
+def clean_file(src_path:str, prefix:str='cleaned-',_res_path:str=None):
     df = excel_helper.auto_cleanup('website')
     if(_res_path):
         df.to_csv(_res_path)
@@ -20,7 +20,7 @@ def clean_file(src_path:str, prefix:str=None,_res_path:str=None):
     print(f'{Colors.GREEN}file saved at: {_res_path}{Colors.END}')
     return df
 
-def keep_columns(columns:list['str'], prefix:str=None,_res_path:str=None):
+def keep_columns(columns:list['str'], prefix:str='trimmed-',_res_path:str=None):
     df=excel_helper.choose_columns_to_keep(columns=columns)
     if(_res_path):
         df.to_csv(_res_path)
@@ -30,6 +30,18 @@ def keep_columns(columns:list['str'], prefix:str=None,_res_path:str=None):
     print(f'{Colors.GREEN}file saved at: {_res_path}{Colors.END}')
     return df
 
+def make_file_for_verification(src_path:str, prefix:str='for-verif-'):
+    res = EmailListHelper().extract_emails(src_path)
+    _res_path = file_helper.make_res_path(src_path, prefix)
+    res.to_csv(_res_path, index=False)
+    print(f'{Colors.GREEN}file saved at: {_res_path}{Colors.END}')
+
+
+def save_verified_results(src_path:str,verif_path:str, prefix:str='verified-'):
+    res = EmailListHelper().map_verified_email(src_path=src_path, verif_path=verif_path)
+    _res_path = file_helper.make_res_path(src_path, prefix)
+    res.to_csv(_res_path, index=False)
+    print(f'{Colors.GREEN}file saved at: {_res_path}{Colors.END}')
 
 def save_csv(data:list[dict],src_path:str, res_path:str=None):
     import pandas as pd
@@ -52,7 +64,9 @@ if __name__ == "__main__":
     crawl_csv = args['crawl_csv']
     keep_cols=args['keep_cols']
     cleanup = args['cleanup']
-
+    make_csv_for_verif = args['make_csv_for_verif']
+    map_verified_emails = args['map_verified_emails']
+    
     if(src_path):
         excel_helper = ExcelHelper(src_path)
         
@@ -60,18 +74,25 @@ if __name__ == "__main__":
             process_creator = ProcessCreator( src_path=src_path, res_path=res_path, spider=EmailSpider)
             
             res_map = process_creator.create_spider_processes_sequence()
-            # save_csv(res_map, src_path)
-            # print(f'{Colors.LIGHT_BLUE}{res_map}{Colors.END}')
-            
+
         if(cleanup):
-            clean_file(src_path, prefix='cleaned-')
+            clean_file(src_path)
             
         if(keep_cols):
-            keep_columns(columns=keep_cols, prefix='trimmed-')
+            keep_columns(columns=keep_cols)
+            
+        if(make_csv_for_verif):
+            make_file_for_verification(src_path)
+        
+        if(map_verified_emails):
+            save_verified_results(src_path, map_verified_emails)
     
     if(web):
         data = ProcessCreator(spider=SingleEmailSpider).create_spider_and_crawl({'website':web})
         print(f'{Colors.BROWN}\n+{"+"*10}\n{data}\n{"+"*10}{Colors.END}')
     
-    res = EmailListHelper().extract_emails('res-LegalConsultancies_1-6.csv')
-    res.to_csv('for-verif-res-LegalConsultancies_1-6.csv', index=False)
+
+    
+    
+    
+    
