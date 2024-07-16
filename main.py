@@ -69,18 +69,18 @@ if __name__ == "__main__":
     
     if(src_path):
         excel_helper = ExcelHelper(src_path)
-        
-        if(crawl_csv==True):
-            process_creator = ProcessCreator( src_path=src_path, res_path=res_path, spider=EmailSpider)
-            
-            res_map = process_creator.create_spider_processes_sequence()
 
         if(cleanup):
             clean_file(src_path)
             
         if(keep_cols):
             keep_columns(columns=keep_cols)
+        
+        if(crawl_csv==True):
+            process_creator = ProcessCreator( src_path=src_path, res_path=res_path, spider=EmailSpider)
             
+            res_map = process_creator.create_spider_processes_sequence()
+        
         if(make_csv_for_verif):
             make_file_for_verification(src_path)
         
