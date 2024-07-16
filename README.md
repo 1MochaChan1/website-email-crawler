@@ -31,9 +31,12 @@ Tool that crawls list of websites given as a csv and finds emails against them a
 #### `--crawl_csv`
     Use this flag if you want to crawl websites inside a csv file.
 #### `--make_csv_for_verif`
-    Enter the path of the file containing the scraped emails in single cells. This will prepare the document for verification by creating rows for each email found for a specific domain. Creates a **for_verif** file
+    Enter the path of the file containing the scraped emails in single cells. 
+    This will prepare the document for verification by creating rows for each email found for a specific domain. 
+    Creates a **for_verif** file.
 #### `--map_verified_emails`
-    If your verified list doesn't return the extra data you added to it. This flag helps to map your verified emails to the data in the **for_verif** file.
+    If your verified list doesn't return the extra data you added to it. 
+    This flag helps to map your verified emails to the data in the **for_verif** file.
 
 > [!TIP]
 > Also the ideal way of doing this would be, cleaning the sheet using:
