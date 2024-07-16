@@ -19,6 +19,29 @@ Tool that crawls list of websites given as a csv and finds emails against them a
 4. Finally you can call run the `email_spider.py` file using the following command:
     - `python email_spider.py --src 'path/to/src.csv'`
 
+## More Useful Flags
+#### `--res`
+    Enter the path of the file in which the results needs to be stored.
+#### `--web`
+    Enter the url of the website you want to crawl for emails.
+#### `--cleanup`
+    Enter the path of the csv file containing the column "website" to clean it.
+#### `--keep_cols`
+    Enter the list of columns that you want keep from a csv file and the rest of them will be dropped in the final file.
+#### `--crawl_csv`
+    Use this flag if you want to crawl websites inside a csv file.
+#### `--make_csv_for_verif`
+    Enter the path of the file containing the scraped emails in single cells. This will prepare the document for verification by creating rows for each email found for a specific domain. Creates a **for_verif** file
+#### `--map_verified_emails`
+    If your verified list doesn't return the extra data you added to it. This flag helps to map your verified emails to the data in the **for_verif** file.
+
+> [!TIP]
+> Also the ideal way of doing this would be, cleaning the sheet using:
+> 1. `--cleanup`
+> 2. `--keep_colunmns`
+> 3. `--crawl_csv`
+> 4. `--make_csv_for_verif`
+> 5. `--map_verified_emails` _if used MillionVerifier_
 
 ### Caveat
 1. Still not able to parse header and footer of websites. Will try BS4 for that probably idk.
