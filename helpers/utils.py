@@ -22,45 +22,48 @@ class CMDArgsHelper():
         map_verified_emails=None
         
         parser = argparse.ArgumentParser(description='Crawls given websites in the csv file and returns the data with the email against their names.')
-        parser.add_argument('--src', metavar='src', type=str, help='<Required> Enter the path of the source file which consists of websites needed to crawl')
+        parser.add_argument('--src', metavar='src', type=str, help='src-dependent Enter the path of the source file which consists of websites needed to crawl')
         parser.add_argument('--res', metavar='res', type=str, help='Enter the path of the file in which the results needs to be stored.')
         parser.add_argument('--web', metavar='web', type=str, help='Enter the url of the website you want to crawl for emails.')
         parser.add_argument('--cleanup',  action='store_true', help='Enter the path of the csv file containing the column "website" to clean it.')
         parser.add_argument('--keep_cols', metavar='keep_cols', nargs='+', help='Enter the list of columns that you want keep from a csv file and the rest of them will be dropped in the final file.')
         parser.add_argument('--crawl_csv',  action='store_true', help='Use this flag if you want to crawl websites inside a csv file.')
-        parser.add_argument('--make_csv_for_verif', action='store_true', help='Enter the path of the src file')
+        parser.add_argument('--make_csv_for_verif', action='store_true', help='Enter the path of the file containing the scraped emails in single cells. This will prepare the document for verification')
+        
         parser.add_argument('--map_verified_emails', metavar='map_verified_emails', type=str, help='Enter the path of the file in which the verified emails are stored.')
 
         
         args = parser.parse_args()
         if(args.web):
             web = args.web
-            
+        
         if (args.src):
             src_path = args.src
 
-        if (args.res):
-            res_path = args.res
-        
-        if (args.cleanup == True):
-            cleanup = args.cleanup
+            if (args.res):
+                res_path = args.res
+            else:
+                if(src_path):
+                    os.path.split(src_path)
+                    res_path = FileHandlingHelper().make_res_path(src_path)
             
-        if (args.keep_cols):
-            keep_cols = args.keep_cols
             
-        if (args.crawl_csv):
-            crawl_csv = args.crawl_csv
-        
-        if (args.make_csv_for_verif == True):
-            make_csv_for_verif = args.make_csv_for_verif
-        
-        if(args.map_verified_emails):
-            map_verified_emails = args.map_verified_emails
-        
+            if (args.cleanup == True):
+                cleanup = args.cleanup
+                
+            if (args.keep_cols):
+                keep_cols = args.keep_cols
+                
+            if (args.crawl_csv):
+                crawl_csv = args.crawl_csv
+            
+            if (args.make_csv_for_verif == True):
+                make_csv_for_verif = args.make_csv_for_verif
+            
+            if(args.map_verified_emails):
+                map_verified_emails = args.map_verified_emails
         else:
-            if(src_path):
-                os.path.split(src_path)
-                res_path = FileHandlingHelper().make_res_path(src_path)
+            print(f'{Colors.RED}To use the other opertaions, you have to pass in the source file first{Colors.END}')
         
         return {'res_path':res_path,'src_path':src_path,'web':web, 'cleanup':cleanup, 'keep_cols':keep_cols, 'crawl_csv':crawl_csv, 'make_csv_for_verif':make_csv_for_verif, 'map_verified_emails':map_verified_emails}
 
@@ -115,7 +118,7 @@ class EmailListHelper():
         return email_csv        
         
         
-    def map_verified_email(self, src_path:str, verif_path:str):
+    def map_verified_email(self, src_path:str, verif_path:str, separate:bool=False):
         '''
         This function returns a dcitionary with verified emails in their own columns, provided the columns passed to it has a column named `website`.
         
@@ -125,18 +128,30 @@ class EmailListHelper():
         _df_emails = pd.read_csv(verif_path)
         _df_src = pd.read_csv(src_path)
         _df_map = []
-        for _, row in _df_src.iterrows():
-            curr_website = row['website']
-            verified_col_idx=0
-            
-            for _, e_row in _df_emails.iterrows():
-                if(curr_website==e_row['website']):
-                    row[f'verified_email_{verified_col_idx}'] = e_row['email']
-                    some = row.drop('email')
-                    _df_map.append(some.to_dict())
-                    verified_col_idx += 1
+        if(separate):
+            for _, row in _df_src.iterrows():
+                curr_website = row['website']
+                verified_col_idx=0
+                
+                for _, e_row in _df_emails.iterrows():
+                    if(curr_website==e_row['website']):
+                        row[f'verified_email_{verified_col_idx}'] = e_row['email']
+                        final_row = row.drop('email')
+                        _df_map.append(final_row.to_dict())
+                        verified_col_idx += 1
+        else:
+            for _, row in _df_src.iterrows():
+                curr_website = row['website']
+                
+                for _, e_row in _df_emails.iterrows():
+                    if(curr_website==e_row['website']):
+                        final_row = row.to_dict()
+                        final_row.pop('email')
+                        final_row['verified_email'] = e_row['email']
+                        _df_map.append(final_row)
         _res = pd.DataFrame.from_records(_df_map)
-        _res.drop_duplicates('website', keep='last', inplace=True)
+        # if(separate):
+        #     _res.drop_duplicates('website', keep='last', inplace=True)
         return _res
 
 
