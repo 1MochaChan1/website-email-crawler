@@ -48,3 +48,7 @@ Tool that crawls list of websites given as a csv and finds emails against them a
 
 ### Caveat
 1. Still not able to parse header and footer of websites. Will try BS4 for that probably idk.
+
+## Results
+![Screenshot_1](https://github.com/user-attachments/assets/7dee803b-a249-4aa2-a766-69953a1ecbd4)
+
